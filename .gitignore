@@ -1,3 +1,4 @@
 shots/*
 .idea/*
 *.pyc
+!shots/do_not_delete.txt
