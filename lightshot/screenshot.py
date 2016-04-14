@@ -1,4 +1,4 @@
-from ghost import Ghost
+import ghost
 import time
 import re
 import os
@@ -22,9 +22,11 @@ class Screenshot:
         return str(timestamp) + "_" + stripped_url + ".jpg"
 
     def save_screenshot(self, url, path):
-        ghost = Ghost(wait_timeout=120)
-        page, extra = ghost.open(url)
-        ghost.capture_to(path)
+		g = ghost.Ghost()
+		with g.start() as session:
+			page, extra_resources = session.open(url)
+			if page.http_status == 200:
+				session.capture_to(path)
 
     def delete_local_file(self):
         if self.last_used_filename is not None:
