@@ -23,7 +23,7 @@ class Screenshot:
 
     def save_screenshot(self, url, path):
 		g = ghost.Ghost()
-		with g.start() as session:
+		with g.start(wait_timeout=10) as session:
 			page, extra_resources = session.open(url)
 			if page.http_status == 200:
 				session.capture_to(path)

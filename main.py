@@ -7,6 +7,15 @@ from lightshot.S3 import S3
 from lightshot.screenshot import Screenshot
 from lightshot.LoggerFactory import LoggerFactory
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config( 
+  cloud_name = "dataradar", 
+  api_key = "511666619718731", 
+  api_secret = "WdK9xSwyAs_y06OCuCk2Xqu-ym4" 
+)
 
 debug = True
 
@@ -17,33 +26,39 @@ app.logger.addHandler(logger.create_rotating_file_handler())
 
 @app.route("/generate")
 def generate():
-    url = request.args.get('url', '')
-    url = urllib.unquote(url).decode('utf8')
+	url = request.args.get('url', '')
+	url = urllib.unquote(url).decode('utf8')
 
-    try:
-        screenshot = Screenshot(url)
-        filename = screenshot.capture()
+	try:
+		screenshot = Screenshot(url)
+		filename = screenshot.capture()
+		
+		
 
-        response = {'success': True, 'path': filename}
+		response = {'success': True, 'path': filename}
 
-        upload_to_s3 = app.config['S3_UPLOAD']
+		upload_to_s3 = app.config['S3_UPLOAD']
 
-        if upload_to_s3:
-            s3 = S3(app.config['S3_ACCESS_KEY'], app.config['S3_SECRET_KEY'], app.config['S3_BUCKET'])
-            s3_url = s3.upload_file(screenshot, public_read=True)
-            screenshot.delete_local_file()
-            response['s3_url'] = s3_url
-            del response['path']
+		if upload_to_s3:
+			s3 = S3(app.config['S3_ACCESS_KEY'], app.config['S3_SECRET_KEY'], app.config['S3_BUCKET'])
+			s3_url = s3.upload_file(screenshot, public_read=True)
+			screenshot.delete_local_file()
+			response['s3_url'] = s3_url
+			del response['path']
+		
+		if True:
+			print filename
+			cloudinary.uploader.upload(filename)
+			
+		return jsonify(response)
 
-        return jsonify(response)
+	except Exception as e:
+		app.logger.error(traceback.format_exc())
 
-    except Exception as e:
-        app.logger.error(traceback.format_exc())
+		if app.debug:
+			raise e
 
-        if app.debug:
-            raise e
-
-        return jsonify({'success': False})
+		return jsonify({'success': False})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+	app.run(debug=True)
